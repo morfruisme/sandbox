@@ -1,3 +1,6 @@
-/target
-!/target/release/sandbox.exe
-/src/shade.rs
+target/*
+!target/release
+target/release/*
+!target/release/sandbox.exe
+
+src/shade.rs
