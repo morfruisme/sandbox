@@ -1,2 +1,3 @@
 /target
+!/target/release/sandbox.exe
 /src/shade.rs
