@@ -58,7 +58,7 @@ impl World {
         }
     }
 
-    fn swap(&mut self, x1: usize, y1: usize, x2: usize, y2: usize) {
+    fn _swap(&mut self, x1: usize, y1: usize, x2: usize, y2: usize) {
         let t = self.next_state[x1 + y1*self.width];
         self.next_state[x1 + y1*self.width] = self.next_state[x2 + y2*self.width];
         self.next_state[x2 + y2*self.width] = t;
@@ -169,7 +169,7 @@ impl Particle {
         }
     }
 
-    fn get_density(&self) -> u8 {
+    fn _get_density(&self) -> u8 {
         match *self {
             Particle::Sand  => 5,
             Particle::Stone => 10,
