@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use std::{time::{Duration, Instant}};
 #[allow(unused_imports)]
 use rand::Rng;
 
@@ -19,13 +19,13 @@ fn main() {
 
     let window = WindowBuilder::new()
         .with_title("Sandbox")
-        .with_inner_size(PhysicalSize::new(SCALE*WIDTH, SCALE*HEIGHT))
+        .with_inner_size(PhysicalSize::new(SCALE*(WIDTH + 3), SCALE*HEIGHT))
         .with_min_inner_size(PhysicalSize::new(200, 200))
         .build(&event_loop)
         .unwrap();
 
-    let surface_texture = SurfaceTexture::new(SCALE*WIDTH, SCALE*HEIGHT, &window);
-    let mut pixels = Pixels::new(WIDTH, HEIGHT, surface_texture).unwrap();
+    let surface_texture = SurfaceTexture::new(SCALE*(WIDTH + 3), SCALE*HEIGHT, &window);
+    let mut pixels = Pixels::new(WIDTH + 3, HEIGHT, surface_texture).unwrap();
     init_pixels(pixels.get_frame());
 
     let buff_a = vec![Particle::Void; (WIDTH*HEIGHT) as usize].into_boxed_slice();
@@ -33,8 +33,14 @@ fn main() {
     let mut world = World::new(WIDTH as usize, HEIGHT as usize, buff_a, buff_b);
 
     let mut last = Instant::now();
-    #[allow(unused_variables, unused_mut)]
-    let mut rng = rand::thread_rng();
+    //let mut rng = rand::thread_rng();
+
+    let mut selected_particle = Particle::Sand;
+    let bindings = [//temp
+        Binding { key: VirtualKeyCode::A, particle: Particle::Sand },
+        Binding { key: VirtualKeyCode::Z, particle: Particle::Stone },
+        Binding { key: VirtualKeyCode::E, particle: Particle::Water }
+    ];
     
     event_loop.run(move |event, _, control_flow| {
         if input.update(&event) {
@@ -42,22 +48,21 @@ fn main() {
                 *control_flow = ControlFlow::Exit;
             }
 
-            // TODO: selectable particle type
+            for binding in bindings.iter() {
+                if input.key_pressed(binding.key) {
+                    selected_particle = binding.particle;
+                }
+            }
+
             if input.mouse_held(0) {
                 match input.mouse() {
-                    Some((x, y)) => world.spawn((x/SCALE as f32).floor() as usize, (y/SCALE as f32).floor() as usize, Particle::Sand),//(rng.gen_range(0..10))),
+                    Some((x, y)) => world.spawn((x/SCALE as f32).floor() as usize, (y/SCALE as f32).floor() as usize, selected_particle),
                     None => ()
                 }
             }
-            if input.mouse_held(1) {
+            if input.mouse_pressed(1) {
                 match input.mouse() {
-                    Some((x, y)) => world.spawn((x/SCALE as f32).floor() as usize, (y/SCALE as f32).floor() as usize, Particle::Stone),//(rng.gen_range(0..8))),
-                    None => ()
-                }
-            }
-            if input.key_held(VirtualKeyCode::A) {
-                match input.mouse() {
-                    Some((x, y)) => world.spawn((x/SCALE as f32).floor() as usize, (y/SCALE as f32).floor() as usize, Particle::Water),
+                    Some((x, y)) => world.spawn((x/SCALE as f32).floor() as usize, (y/SCALE as f32).floor() as usize, selected_particle),
                     None => ()
                 }
             }
@@ -72,7 +77,7 @@ fn main() {
         }
 
         if let Event::RedrawRequested(_) = event {
-            world.draw(pixels.get_frame());
+            world.draw(pixels.get_frame(), selected_particle);
             pixels.render().unwrap();
         }
     })
@@ -87,4 +92,9 @@ fn init_pixels(frame: &mut [u8]) {
             frame[index + 2] = 0;
         }
     }
+}
+
+struct Binding {
+    key: VirtualKeyCode,
+    particle: Particle
 }

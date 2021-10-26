@@ -15,32 +15,22 @@ impl World {
         }
     }
 
-    pub fn draw(&self, frame: &mut [u8]) {
+    pub fn draw(&self, frame: &mut [u8], selected_particle: Particle) {
         for y in 0..self.height {
+            let w = self.width + 3;
             for x in 0..self.width {
-                match self.state[x + y*self.width] {
-                    Particle::Sand/*(v)*/ => {
-                        frame[4*(x + y*self.width) + 0] = 200;
-                        frame[4*(x + y*self.width) + 1] = 190;// + v;
-                        frame[4*(x + y*self.width) + 2] = 0;
-                    },
-                    Particle::Stone/*(v)*/ => {
-                        frame[4*(x + y*self.width) + 0] = 84;// + v;
-                        frame[4*(x + y*self.width) + 1] = 90;// + v;
-                        frame[4*(x + y*self.width) + 2] = 96;// + v;
-                    },
-                    Particle::Water => {
-                        frame[4*(x + y*self.width) + 0] = 0;
-                        frame[4*(x + y*self.width) + 1] = 150;
-                        frame[4*(x + y*self.width) + 2] = 255;
-                    }
-                    Particle::Void => {
-                        frame[4*(x + y*self.width) + 0] = 0;
-                        frame[4*(x + y*self.width) + 1] = 0;
-                        frame[4*(x + y*self.width) + 2] = 0;
-                    }
-                }
+                let c = self.state[x + y*self.width].get_color();
+                frame[4*(x + y*w) + 0] = c.0;
+                frame[4*(x + y*w) + 1] = c.1;
+                frame[4*(x + y*w) + 2] = c.2;
             }
+            let p = Particle::from_rank(y);
+            let c = p.get_color();
+            frame[4*(y+1)*w - 4] = c.0;
+            frame[4*(y+1)*w - 3] = c.1;
+            frame[4*(y+1)*w - 2] = c.2;
+
+            frame[4*(y+1)*w - 8] = if p == selected_particle { 255 } else { 0 };
         }
     }
 
@@ -68,12 +58,40 @@ impl World {
         }
     }
 
+    fn swap(&mut self, x1: usize, y1: usize, x2: usize, y2: usize) {
+        let t = self.next_state[x1 + y1*self.width];
+        self.next_state[x1 + y1*self.width] = self.next_state[x2 + y2*self.width];
+        self.next_state[x2 + y2*self.width] = t;
+    }
+
+    // TODO: Fix sand/water interactions
     fn update_sand(&mut self, x: usize, y: usize) {//, v: u8) {
         if y == self.height-1 { return }
+
+        // TODO: fix
+        /*let d = self.next_state[x + y*self.width].get_density();
+        if d > self.next_state[x + (y+1)*self.width].get_density() {
+            self.swap(x, y, x, y+1)
+        }
+        else {
+            if d > self.next_state[(x-1) + (y+1)*self.width].get_density() {
+                self.swap(x, y, x-1, y+1)
+            }
+            else if d > self.next_state[(x+1) + (y+1)*self.width].get_density() {
+                self.swap(x, y, x+1, y+1)
+            }
+            else {
+                self.next_state[x + y*self.width] = Particle::Sand;
+            }
+        }*/
 
         match self.next_state[x + (y+1)*self.width] {
             Particle::Void => {
                 self.next_state[x + y*self.width] = Particle::Void;
+                self.next_state[x + (y+1)*self.width] = Particle::Sand;//(v);
+            }
+            Particle::Water => {
+                self.next_state[x + y*self.width] = Particle::Water;
                 self.next_state[x + (y+1)*self.width] = Particle::Sand;//(v);
             }
             _ => {
@@ -139,4 +157,33 @@ pub enum Particle {
     Stone,//(u8),
     Water,
     Void
+}
+
+impl Particle {
+    fn get_color(&self) -> (u8, u8, u8) {
+        match *self {
+            Particle::Sand  => (255, 255,   0),
+            Particle::Stone => (161, 161, 161),
+            Particle::Water => (  0, 150, 255),
+            Particle::Void  => (  0,   0,   0)
+        }
+    }
+
+    fn get_density(&self) -> u8 {
+        match *self {
+            Particle::Sand  => 5,
+            Particle::Stone => 10,
+            Particle::Water => 1,
+            Particle::Void  => 0
+        }
+    }
+
+    fn from_rank(rank: usize) -> Particle {
+        match rank {
+            1 => Particle::Sand,
+            2 => Particle::Stone,
+            3 => Particle::Water,
+            _ => Particle::Void
+        }
+    }
 }
