@@ -9,8 +9,8 @@ use winit_input_helper::WinitInputHelper;
 mod world;
 use crate::world::*;
 
-const SCALE: u32 = 10;
-const WIDTH: u32 = 100;
+const SCALE: u32 = 15;
+const WIDTH: u32 = 50;
 const HEIGHT: u32 = 50;
 
 fn main() {
@@ -37,9 +37,10 @@ fn main() {
 
     let mut selected_particle = Particle::Sand;
     let bindings = [//temp
-        Binding { key: VirtualKeyCode::A, particle: Particle::Sand },
+        Binding { key: VirtualKeyCode::A, particle: Particle::Sand  },
         Binding { key: VirtualKeyCode::Z, particle: Particle::Stone },
-        Binding { key: VirtualKeyCode::E, particle: Particle::Water }
+        Binding { key: VirtualKeyCode::E, particle: Particle::Water },
+        Binding { key: VirtualKeyCode::R, particle: Particle::Oil   }
     ];
     
     event_loop.run(move |event, _, control_flow| {
@@ -55,15 +56,13 @@ fn main() {
             }
 
             if input.mouse_held(0) {
-                match input.mouse() {
-                    Some((x, y)) => world.spawn((x/SCALE as f32).floor() as usize, (y/SCALE as f32).floor() as usize, selected_particle),
-                    None => ()
+                if let Some((x, y)) = input.mouse() {
+                    world.spawn((x/SCALE as f32).floor() as usize, ((y/SCALE as f32).floor() as usize)%(HEIGHT as usize), selected_particle);
                 }
             }
             if input.mouse_pressed(1) {
-                match input.mouse() {
-                    Some((x, y)) => world.spawn((x/SCALE as f32).floor() as usize, (y/SCALE as f32).floor() as usize, selected_particle),
-                    None => ()
+                if let Some((x, y)) = input.mouse() {
+                    world.spawn((x/SCALE as f32).floor() as usize, (y/SCALE as f32).floor() as usize, selected_particle);
                 }
             }
 
