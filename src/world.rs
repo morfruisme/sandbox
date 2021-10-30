@@ -78,7 +78,7 @@ impl World {
             if x != 0 && d > self.next_state[(x-1) + y*self.width].density() && d > self.next_state[(x-1) + (y+1)*self.width].density() {
                 self.swap((x, y), (x-1, y+1))
             }
-            else if x != self.width && d > self.next_state[(x+1) + y*self.width].density() && d > self.next_state[(x+1) + (y+1)*self.width].density() {
+            else if x != self.width-1 && d > self.next_state[(x+1) + y*self.width].density() && d > self.next_state[(x+1) + (y+1)*self.width].density() {
                 self.swap((x, y), (x+1, y+1))
             }
             else {
@@ -110,21 +110,51 @@ impl World {
         else {
             // Flow direction
             let mut dir: Option<bool> = None;
+            let mut loop_left = x != 0;
+            let mut loop_right = x != self.width-1;
 
+            for i in 1..usize::max(x, self.width-1 - x) {
+                if loop_left {
+                    if x - i == 0 { loop_left = false }
+                    if d <= self.next_state[(x - i) + y*self.width].density() { loop_left = false }
+                    else if d > self.next_state[(x - i) + (y+1)*self.width].density() {
+                        dir = Some(false);
+                        break;
+                    }
+                }
+                if loop_right {
+                    if x + i == self.width-1 { loop_right = false }
+                    if d <= self.next_state[(x + i) + y*self.width].density() { loop_right = false }
+                    else if d > self.next_state[(x + i) + (y+1)*self.width].density() {
+                        dir = Some(true);
+                        break;
+                    }
+                }
+            }
+
+            /* Bof
+            let mut left: Option<usize> = None;
+            
             for i in 1..=x {
                 if d <= self.next_state[(x-i) + y*self.width].density() { break }
                 else if d > self.next_state[(x-i) + (y+1)*self.width].density() {
                     dir = Some(false);
+                    left = Some(i);
                     break;
                 }
             }
             for i in 1..=(self.width-x-1) {
                 if d <= self.next_state[(x+i) + y*self.width].density() { break }
                 else if d > self.next_state[(x+i) + (y+1)*self.width].density() {
-                    dir = Some(true);
+                    if let Some(left) = left {
+                        dir = Some(i > left);
+                    }
+                    else {
+                        dir = Some(true);
+                    }
                     break;
                 }
-            }
+            }*/
 
             if let Some(dir) = dir {
                 self.swap((x, y), (if dir { x+1 } else { x-1 }, y));
